@@ -1,14 +1,19 @@
 package org.fossasia.phimpme.uploadhistory;
 
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.mikepenz.community_material_typeface_library.CommunityMaterial;
 import com.mikepenz.iconics.IconicsDrawable;
@@ -17,12 +22,20 @@ import com.mikepenz.iconics.view.IconicsImageView;
 import org.fossasia.phimpme.R;
 import org.fossasia.phimpme.base.ThemedActivity;
 import org.fossasia.phimpme.data.local.UploadHistoryRealmModel;
+import org.fossasia.phimpme.gallery.activities.LFMainActivity;
+import org.fossasia.phimpme.gallery.activities.SingleMediaActivity;
+import org.fossasia.phimpme.gallery.data.Media;
 import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.realm.Realm;
 import io.realm.RealmQuery;
+
+import static org.fossasia.phimpme.base.SharedMediaActivity.getAlbums;
+import static org.fossasia.phimpme.gallery.activities.SplashScreen.ACTION_OPEN_ALBUM;
 
 /**
  * Created by pa1pal on 17/08/17.
@@ -71,7 +84,28 @@ public class UploadHistory extends ThemedActivity {
         //uploadHistoryRecyclerView.addOnItemTouchListener(new RecyclerItemClickListner(this, this));
     }
 
+    private View.OnClickListener uploadPhotoClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int pos = (int) v.getTag();
+
+
+            String pathname = uploadResults.findAll().get(pos).getPathname();
+
+            Intent intent = new Intent(UploadHistory.this , SingleMediaActivity.class);
+            intent.putExtra("path", Uri.fromFile(new File( pathname )).toString());
+            Toast.makeText(getApplicationContext(),pathname,Toast.LENGTH_LONG).show();
+
+            //ActivityOptionsCompat options = ActivityOptionsCompat.
+            //        makeSceneTransitionAnimation(UploadHistory.this, v, v.getTransitionName());
+            intent.setAction( "android.intent.action.pagerAlbumMedia" );
+            //getAlbums().getCurrentAlbum().setCurrentPhotoIndex(4);
+            startActivity(intent);
+        }
+    };
+
     private void setUpUI() {
+        uploadHistoryAdapter.setOnClickListener(uploadPhotoClickListener);
         emptyIcon.setColor(getIconColor());
         emptyText.setTextColor(getAccentColor());
         parentView.setBackgroundColor(getBackgroundColor());

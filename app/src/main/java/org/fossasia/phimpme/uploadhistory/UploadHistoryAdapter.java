@@ -1,20 +1,26 @@
 package org.fossasia.phimpme.uploadhistory;
 
+import android.content.Intent;
 import android.net.Uri;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import org.fossasia.phimpme.R;
 import org.fossasia.phimpme.data.local.UploadHistoryRealmModel;
+import org.fossasia.phimpme.gallery.activities.LFMainActivity;
+import org.fossasia.phimpme.gallery.activities.SingleMediaActivity;
 
 import java.io.File;
 import java.text.DateFormat;
@@ -40,6 +46,7 @@ public class UploadHistoryAdapter extends RecyclerView.Adapter<UploadHistoryAdap
     private Realm realm = Realm.getDefaultInstance();
     private RealmQuery<UploadHistoryRealmModel> realmResult = realm.where(UploadHistoryRealmModel.class);
     private int color;
+    private View.OnClickListener mOnClickListener;
 
     public UploadHistoryAdapter(int color) {
         this.color=color;
@@ -49,9 +56,14 @@ public class UploadHistoryAdapter extends RecyclerView.Adapter<UploadHistoryAdap
     public UploadHistoryAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.upload_history_item_view, null, false);
+        view.setOnClickListener(mOnClickListener);
         view.setLayoutParams(new RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT,
                 RecyclerView.LayoutParams.WRAP_CONTENT));
         return new ViewHolder(view);
+    }
+
+    public void setOnClickListener(View.OnClickListener lis) {
+        mOnClickListener = lis;
     }
 
     @Override
@@ -70,6 +82,7 @@ public class UploadHistoryAdapter extends RecyclerView.Adapter<UploadHistoryAdap
                 DateFormat uploadTime = new SimpleDateFormat("hh:mm:ss");
                 holder.uploadDate.setText(uploadDate.format(parsedDate));
                 holder.uploadTime.setText(uploadTime.format(parsedDate));
+                holder.itemView.setTag(position);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
