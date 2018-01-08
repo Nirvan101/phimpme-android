@@ -20,14 +20,17 @@ import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.iconics.view.IconicsImageView;
 
 import org.fossasia.phimpme.R;
+import org.fossasia.phimpme.base.SharedMediaActivity;
 import org.fossasia.phimpme.base.ThemedActivity;
 import org.fossasia.phimpme.data.local.UploadHistoryRealmModel;
 import org.fossasia.phimpme.gallery.activities.LFMainActivity;
 import org.fossasia.phimpme.gallery.activities.SingleMediaActivity;
+import org.fossasia.phimpme.gallery.data.Album;
 import org.fossasia.phimpme.gallery.data.Media;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -41,7 +44,7 @@ import static org.fossasia.phimpme.gallery.activities.SplashScreen.ACTION_OPEN_A
  * Created by pa1pal on 17/08/17.
  */
 
-public class UploadHistory extends ThemedActivity {
+public class UploadHistory extends SharedMediaActivity {
 
     @BindView(R.id.upload_history_recycler_view)
     RecyclerView uploadHistoryRecyclerView;
@@ -87,20 +90,11 @@ public class UploadHistory extends ThemedActivity {
     private View.OnClickListener uploadPhotoClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            int pos = (int) v.getTag();
 
+            Toast.makeText(getApplicationContext(),"Open image",Toast.LENGTH_SHORT).show();
 
-            String pathname = uploadResults.findAll().get(pos).getPathname();
+            //open photo in SingleMediaActivity
 
-            Intent intent = new Intent(UploadHistory.this , SingleMediaActivity.class);
-            intent.putExtra("path", Uri.fromFile(new File( pathname )).toString());
-            Toast.makeText(getApplicationContext(),pathname,Toast.LENGTH_LONG).show();
-
-            //ActivityOptionsCompat options = ActivityOptionsCompat.
-            //        makeSceneTransitionAnimation(UploadHistory.this, v, v.getTransitionName());
-            intent.setAction( "android.intent.action.pagerAlbumMedia" );
-            //getAlbums().getCurrentAlbum().setCurrentPhotoIndex(4);
-            startActivity(intent);
         }
     };
 
