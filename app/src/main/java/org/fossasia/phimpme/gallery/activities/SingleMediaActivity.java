@@ -194,7 +194,14 @@ public class SingleMediaActivity extends SharedMediaActivity implements ImageAda
                 e.printStackTrace();
             }
             finally{
-                handler.postDelayed(this, SLIDE_SHOW_INTERVAL);
+                if(getAlbum().getCurrentMediaIndex()+1 == getAlbum().getMedia().size() - 1){
+                    handler.removeCallbacks(slideShowRunnable);
+                    slideshow=false;
+                    toggleSystemUI();
+                }
+                else{
+                    handler.postDelayed(this, SLIDE_SHOW_INTERVAL);
+                }
             }
         }
     };
@@ -597,7 +604,8 @@ public class SingleMediaActivity extends SharedMediaActivity implements ImageAda
                     }
                 });
                 dialogBuilder.show();
-            }
+            } else
+                Toast.makeText(this,"Photo deleted",Toast.LENGTH_SHORT).show();
             if (getAlbum().getMedia().size() == 0) {
                 if (customUri) finish();
                 else {
@@ -612,6 +620,7 @@ public class SingleMediaActivity extends SharedMediaActivity implements ImageAda
             LFMainActivity.listAll.remove(current_image_pos);
             size_all = LFMainActivity.listAll.size();
             adapter.notifyDataSetChanged();
+            Toast.makeText(this,"Photo deleted",Toast.LENGTH_SHORT).show();
 //            mViewPager.setCurrentItem(current_image_pos);
 //            toolbar.setTitle((mViewPager.getCurrentItem() + 1) + " " + getString(R.string.of) + " " + size_all);
         } else if(favphotomode && !allPhotoMode){
@@ -629,6 +638,7 @@ public class SingleMediaActivity extends SharedMediaActivity implements ImageAda
             size_all = favouriteslist.size();
             adapter.notifyDataSetChanged();
             getSupportActionBar().setTitle((c + 1) + " " + getString(R.string.of) + " " + size_all);
+            Toast.makeText(this,"Photo deleted from favourites",Toast.LENGTH_SHORT).show();
         }
     }
 

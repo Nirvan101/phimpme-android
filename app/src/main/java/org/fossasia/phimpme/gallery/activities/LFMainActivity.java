@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -15,6 +16,7 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.drawable.Drawable;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -61,6 +63,7 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.mikepenz.google_material_typeface_library.GoogleMaterial;
@@ -1303,7 +1306,7 @@ public class LFMainActivity extends SharedMediaActivity {
         togglePrimaryToolbarOptions(menu);
         updateSelectedStuff();
         visible = getAlbum().getSelectedCount() > 0;
-        menu.findItem(R.id.action_copy).setVisible(visible);
+        menu.findItem(R.id.action_copy).setVisible(visible || (editMode && all_photos));
         menu.findItem(R.id.action_move).setVisible((visible || editMode));
         menu.findItem(R.id.excludeAlbumButton).setVisible(editMode && !all_photos && albumsMode && !fav_photos);
         menu.findItem(R.id.zipAlbumButton).setVisible(editMode && !all_photos&&albumsMode &&!fav_photos);
@@ -1557,17 +1560,31 @@ public class LFMainActivity extends SharedMediaActivity {
                                         swipeRefreshLayout.setRefreshing(true);
                                     } else
                                         mediaAdapter.swapDataSet(getAlbum().getMedia());
+                                    if(succ)
+                                        Toast.makeText(getApplicationContext(),"Photo deleted",Toast.LENGTH_SHORT).show();
+                                    else
+                                        Toast.makeText(getApplicationContext(),"Photo deletion unsuccessful",Toast.LENGTH_SHORT).show();
                                 } else if(all_photos && !fav_photos){
                                     clearSelectedPhotos();
                                     listAll = StorageProvider.getAllShownImages(LFMainActivity.this);
                                     media = listAll;
                                     size = listAll.size();
                                     mediaAdapter.swapDataSet(listAll);
+
+                                    if(succ)
+                                        Toast.makeText(getApplicationContext(),"Photo deleted",Toast.LENGTH_SHORT).show();
+                                    else
+                                        Toast.makeText(getApplicationContext(),"Photo deletion unsuccessful",Toast.LENGTH_SHORT).show();
                                 }
                                 else if(fav_photos && !all_photos){
                                     clearSelectedPhotos();
                                     getfavouriteslist();
                                     new FavouritePhotos().execute();
+
+                                    if(succ)
+                                        Toast.makeText(getApplicationContext(),"Photo deleted from favourites",Toast.LENGTH_SHORT).show();
+                                    else
+                                        Toast.makeText(getApplicationContext(),"Photo deletion unsuccessful",Toast.LENGTH_SHORT).show();
                                 }
                             }
                         } else requestSdCardPermissions();
@@ -2132,7 +2149,7 @@ public class LFMainActivity extends SharedMediaActivity {
                 AlertDialogsHelper.setButtonTextColor(new int[]{DialogInterface.BUTTON_POSITIVE, DialogInterface
                         .BUTTON_NEGATIVE}, getAccentColor(), renameDialog);
                 renameDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-                AlertDialogsHelper.setButtonTextColor(new int[]{DialogInterface.BUTTON_POSITIVE}, getColor(R.color.grey), renameDialog);
+                AlertDialogsHelper.setButtonTextColor(new int[]{DialogInterface.BUTTON_POSITIVE}, ContextCompat.getColor(LFMainActivity.this,R.color.grey), renameDialog);
                 editTextNewName.addTextChangedListener(new TextWatcher() {
                     @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
                         //empty method body
@@ -2148,7 +2165,7 @@ public class LFMainActivity extends SharedMediaActivity {
                             // Disable ok button
                             renameDialog.getButton(
                                     AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-                            AlertDialogsHelper.setButtonTextColor(new int[]{DialogInterface.BUTTON_POSITIVE}, getColor(R.color.grey), renameDialog);
+                            AlertDialogsHelper.setButtonTextColor(new int[]{DialogInterface.BUTTON_POSITIVE},ContextCompat.getColor(LFMainActivity.this,R.color.grey), renameDialog);
 
                         } else {
                             // Something into edit text. Enable the button.
@@ -2302,6 +2319,22 @@ public class LFMainActivity extends SharedMediaActivity {
             hidenav=false;
         }
     }
+
+    //to copy from all photos.
+    private boolean copyfromallphotos(Context context, String folderPath){
+        boolean success = false;
+        for(Media m: selectedMedias){
+            try {
+                File from = new File(m.getPath());
+                File to = new File(folderPath);
+                if (success = ContentHelper.copyFile(context, from, to))
+                    scanFile(context, new String[]{ StringUtils.getPhotoPathMoved(m.getPath(), folderPath) });
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+        return success;
+    }
+
+    public void scanFile(Context context, String[] path) { MediaScannerConnection.scanFile(context, path, null, null); }
 
     /**
      * If we are in albumsMode, make the albums recyclerView visible. If we are not, make media recyclerView visible.
@@ -2677,7 +2710,7 @@ public class LFMainActivity extends SharedMediaActivity {
     private class CopyPhotos extends AsyncTask<String, Integer, Boolean> {
 
         private String path;
-        private Boolean moveAction, copyAction;
+        private Boolean moveAction, copyAction, success;
         CopyPhotos(String path, Boolean moveAction,Boolean copyAction)
         {
             this.path = path;
@@ -2693,9 +2726,14 @@ public class LFMainActivity extends SharedMediaActivity {
 
         @Override
         protected Boolean doInBackground(String... arg0) {
-            boolean success = getAlbum().copySelectedPhotos(getApplicationContext(), path);
-            MediaStoreProvider.getAlbums(LFMainActivity.this);
-            getAlbum().updatePhotos(getApplicationContext());
+            if(!all_photos){
+                success = getAlbum().copySelectedPhotos(getApplicationContext(), path);
+                MediaStoreProvider.getAlbums(LFMainActivity.this);
+                getAlbum().updatePhotos(getApplicationContext());
+            }
+            else{
+                success = copyfromallphotos(getApplicationContext(), path);
+            }
             return success;
         }
 
@@ -2703,7 +2741,11 @@ public class LFMainActivity extends SharedMediaActivity {
         protected void onPostExecute(Boolean result) {
             if(result)
             {
-                mediaAdapter.swapDataSet(getAlbum().getMedia());
+                if(!all_photos){
+                    mediaAdapter.swapDataSet(getAlbum().getMedia());
+                }else {
+                    mediaAdapter.swapDataSet(listAll);
+                }
                 mediaAdapter.notifyDataSetChanged();
                 invalidateOptionsMenu();
                 swipeRefreshLayout.setRefreshing(false);
